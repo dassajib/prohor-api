@@ -5,41 +5,34 @@ import (
 	"gorm.io/gorm"
 )
 
-// UserRepository is like a contract that defines what user-related database operations we support
-// Think of it as a menu at a restaurant - it shows what you can order
+// this interface is set what db related operations we support
 type UserRepository interface {
-	Create(user *model.User) error                 // Saves a new user to database
-	FindByEmail(email string) (*model.User, error) // Finds user by email address
+	Create(user *model.User) error
+	FindByEmail(email string) (*model.User, error)
 }
 
-// userRepository is the actual implementation that does the real database work
-// This is like the kitchen that prepares the food from the menu
+// this struct is the actual implementation that does the real database work
 type userRepository struct {
-	db *gorm.DB // Database connection - our "kitchen tools"
+	db *gorm.DB
 }
 
-// NewUserRepository is like a factory that creates our ready-to-use database operations helper
-// We give it a database connection (db) and it gives us back a UserRepository
+// repository constructor function
 func NewUserRepository(db *gorm.DB) UserRepository {
-	// Create new userRepository instance with the provided database connection
-	// We return it as UserRepository interface type (like putting our kitchen behind a service window)
+	// create a new UserRepository instance with provided db connection
 	return &userRepository{db}
 }
 
-// Create saves a new user to the database
+// receiver func to create user
 func (r *userRepository) Create(user *model.User) error {
-	// r.db.Create performs the actual SQL INSERT operation
-	// .Error gives us any error that might have occurred
+	// sql insert operation's value and error that might occurred
 	return r.db.Create(user).Error
 }
 
-// FindByEmail looks up a user by their email address
+// receiver func to find the user by given email
 func (r *userRepository) FindByEmail(email string) (*model.User, error) {
-	var user model.User // Empty container to store the found user
-
-	// This is like doing: SELECT * FROM users WHERE email = ? LIMIT 1
+	var user model.User
+	// sql operation to find the user exist or not
 	err := r.db.Where("email = ?", email).First(&user).Error
-
-	// Return pointer to the found user and any error (nil if no error)
+	// return the pointer to the user orr error that might occurred
 	return &user, err
 }
