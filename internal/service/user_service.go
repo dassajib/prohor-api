@@ -9,69 +9,68 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// UserService defines what user-related operations our application supports
-// Think of this as the "public API" for user management
+// UserService defines the methods that user-related services must implement.
 type UserService interface {
-	Register(username, email, password, confirmPassword string) error // Handles user registration
-	Login(email, password string) (string, string, error)             // Handles user login
+	Register(username, email, password, confirmPassword string) error
+	Login(email, password string) (string, string, error)
 }
 
-// userService is the concrete implementation of UserService
+// userService provides implementation of the UserService interface.
 type userService struct {
-	repo repository.UserRepository // We depend on the repository to handle database operations
+	repo repository.UserRepository
 }
 
-// NewUserService creates a ready-to-use user service
-// We inject the repository dependency (database operations) when creating the service
-func NewUserService(repo repository.UserRepository) UserService {
-	return &userService{repo: repo} // Initialize with the provided repository
+// constructor func
+// NewUserService creates and returns a new UserService instance.
+func NewUserService(repo repository.UserRepository) userService {
+	return userService{repo: repo}
 }
 
-// Register handles new user registration with validation and password hashing
+// receiver func for registration logic, validation and db operation
 func (s *userService) Register(username, email, password, confirmPassword string) error {
-	// 1. Check if passwords match
+	// check password and confirm pass match or not
 	if password != confirmPassword {
-		return errors.New("passwords do not match")
+		return errors.New("Password do not match")
 	}
 
-	// 2. Check if email already exists
+	// check if the email already exists in the database
 	_, err := s.repo.FindByEmail(email)
-	if err == nil { // No error means user was found
-		return errors.New("email already registered")
+	if err == nil {
+		return errors.New("Email already exist.")
 	}
 
-	// 3. Hash the password for secure storage
+	// hash the user's password
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
-	// 4. Create new user object
+	// create new User model instance
 	user := &model.User{
 		Username:     username,
 		Email:        email,
-		PasswordHash: string(hashedPassword), // Store the hashed version, never raw password!
+		PasswordHash: string(hashedPassword),
 	}
 
-	// 5. Save to database
+	// to save call repo Create method
 	return s.repo.Create(user)
 }
 
-// Login authenticates users and generates JWT tokens upon successful login
+// receiver func for auth and generate token
 func (s *userService) Login(email, password string) (string, string, error) {
-	// 1. Find user by email
+	// find the user by email
 	user, err := s.repo.FindByEmail(email)
 	if err != nil {
-		return "", "", errors.New("user not found") // Don't reveal too much info (security best practice)
+		return "", "", errors.New("User not found.")
 	}
 
-	// 2. Compare provided password with stored hash
+	// compare the provided password with the stored hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return "", "", errors.New("invalid password") // Generic error message (security best practice)
+		return "", "", errors.New("Wrong password.")
 	}
 
-	// 3. Generate JWT tokens if credentials are valid
-	accessToken, _ := utils.GenerateAccessToken(user.ID)   // Short-lived token
-	refreshToken, _ := utils.GenerateRefreshToken(user.ID) // Long-lived token for getting new access tokens
+	// generate access and refresh tokens
+	accessToken, _ := utils.GenerateAccessToken(user.ID)
+	refreshToken, _ := utils.GenerateRefreshToken(user.ID)
 
-	// 4. Return tokens
+	// return generated tokens
 	return accessToken, refreshToken, nil
 }

@@ -10,18 +10,17 @@ import (
 	"gorm.io/gorm"
 )
 
-// DB is the global variable and holding db connection instance  
-// pointer to gorm.db object
+// global variable to hold db connection instance and pointer to gorm.DB
 var DB *gorm.DB
 
 func InitDB() {
-	// load .env file
+	// load .env
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		log.Fatalf("Error loading .env file.")
 	}
 
-	// used to connect to db with info from .env
+	// get all required variable from env
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
@@ -29,10 +28,10 @@ func InitDB() {
 		os.Getenv("DB_NAME"),
 		os.Getenv("DB_PORT"))
 
-	// establish a connection to postgresql via gorm
+	//connection establish to db with default config
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect db: %v", err)
 	}
 
 	DB = db

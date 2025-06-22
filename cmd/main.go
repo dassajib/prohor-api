@@ -16,18 +16,18 @@ func main() {
 	config.InitDB()
 	db := config.DB
 
-	// auto migrate User model
+	// to auto migrate user model
 	db.AutoMigrate(&model.User{})
 
-	// Initialize the application components in a layered structure using dependency injection.
+	// layered structure with dependency injection
 	userRepo := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := handler.NewUserHandler(&userService)
 
-	// initialize the router with default middleware
+	// to initialize gin router with default middleware
 	r := gin.Default()
 
-	// cors config
+	// CORS config
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -37,9 +37,10 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// handler func call after call api route
 	r.POST("/register", userHandler.Register)
 	r.POST("/login", userHandler.Login)
 
-	// listen and serve on localhost:8080
+	// serve port on this address
 	r.Run(":8080")
 }
