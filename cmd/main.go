@@ -18,12 +18,16 @@ func main() {
 	db := config.DB
 
 	// to auto migrate user model
-	db.AutoMigrate(&model.User{})
+	db.AutoMigrate(&model.User{}, &model.Note{})
 
 	// layered structure with dependency injection
 	userRepo := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(&userService)
+
+	noteRepo := repository.NewNoteRepository(db)
+	noteService := service.NewNoteService(noteRepo)
+	noteHandler := handler.NewNoteHandler(noteService)
 
 	// to initialize gin router with default middleware
 	r := gin.Default()
@@ -46,11 +50,11 @@ func main() {
 	noteGroup := r.Group("/notes")
 	noteGroup.Use(middleware.AuthMiddleware())
 	{
-		noteGroup.POST("/")
-		noteGroup.GET("/")
-		noteGroup.PUT("/")
-		noteGroup.DELETE("/:id")
-		noteGroup.PUT("restore/:id")
+		noteGroup.POST("/", noteHandler.CreateNote)
+		noteGroup.GET("/", noteHandler.GetUserNotes)
+		noteGroup.PUT("/:id", noteHandler.UpdateNote)
+		noteGroup.DELETE("/:id", noteHandler.DeleteNote)
+		noteGroup.PUT("/:id/restore", noteHandler.RestoreNote)
 	}
 
 	// serve port on this address
