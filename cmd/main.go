@@ -5,6 +5,7 @@ import (
 
 	"github.com/dassajib/prohor-api/config"
 	"github.com/dassajib/prohor-api/internal/handler"
+	"github.com/dassajib/prohor-api/internal/middleware"
 	"github.com/dassajib/prohor-api/internal/model"
 	"github.com/dassajib/prohor-api/internal/repository"
 	"github.com/dassajib/prohor-api/internal/service"
@@ -40,6 +41,17 @@ func main() {
 	// handler func call after call api route
 	r.POST("/register", userHandler.Register)
 	r.POST("/login", userHandler.Login)
+
+	// note routes after checking authorized or not
+	noteGroup := r.Group("/notes")
+	noteGroup.Use(middleware.AuthMiddleware())
+	{
+		noteGroup.POST("/")
+		noteGroup.GET("/")
+		noteGroup.PUT("/")
+		noteGroup.DELETE("/:id")
+		noteGroup.PUT("restore/:id")
+	}
 
 	// serve port on this address
 	r.Run(":8080")
