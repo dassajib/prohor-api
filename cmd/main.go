@@ -47,7 +47,7 @@ func main() {
 	r.POST("/login", userHandler.Login)
 
 	// note routes after checking authorized or not
-	noteGroup := r.Group("/notes")
+	noteGroup := r.Group("/api/notes")
 	noteGroup.Use(middleware.AuthMiddleware())
 	{
 		noteGroup.POST("/", noteHandler.CreateNote)
