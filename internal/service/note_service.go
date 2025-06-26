@@ -15,6 +15,7 @@ type NoteService interface {
 	Delete(id uint) error
 	Restore(id uint) error
 	DeletePermanent(id uint) error
+	SearchUserNotes(userID uint, query string) ([]model.Note, error)
 }
 
 // struct that implements NoteService interface
@@ -61,4 +62,9 @@ func (s *noteService) Restore(id uint) error {
 // delete permanently
 func (s *noteService) DeletePermanent(id uint) error {
 	return s.repo.DeletePermanent(id)
+}
+
+// search note
+func (s *noteService) SearchUserNotes(userID uint, query string) ([]model.Note, error) {
+	return s.repo.SearchUserNotes(userID, query)
 }
