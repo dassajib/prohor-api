@@ -14,6 +14,7 @@ type NoteRepository interface {
 	// marks deleted_at but doesn't remove
 	DeleteSoft(id uint) error
 	RestoreDeleted(id uint) error
+	DeletePermanent(id uint) error
 }
 
 type noteRepository struct {
@@ -61,4 +62,9 @@ func (r *noteRepository) DeleteSoft(id uint) error {
 // restoreDeleted resets the deleted_at field to NULL (restores the note)
 func (r *noteRepository) RestoreDeleted(id uint) error {
 	return r.db.Unscoped().Model(&model.Note{}).Where("id = ?", id).Update("deleted_at", nil).Error
+}
+
+// permanently delete from db
+func (r * noteRepository) DeletePermanent (id uint) error {
+	return r.db.Unscoped().Delete(&model.Note{}, id).Error
 }
