@@ -23,7 +23,7 @@ func NewNoteHandler(service service.NoteService) *NoteHandler {
 // saves a new note with title, content, tag, and auto-filled user and date
 func (h *NoteHandler) CreateNote(c *gin.Context) {
 	// get logged-in user's ID from token
-	userID := c.MustGet("user_id").(uint) 
+	userID := c.MustGet("user_id").(uint)
 	var note model.Note
 
 	// bind JSON input to note model
@@ -133,4 +133,19 @@ func (h *NoteHandler) RestoreNote(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "note restored"})
+}
+
+func (h *NoteHandler) DeleteNotePermanent(c *gin.Context) {
+	var id uint
+	if _, err := fmt.Sscan(c.Param("id"), &id); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid note ID"})
+		return
+	}
+
+	if err := h.service.DeletePermanent(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not permanently delete note"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "note permanently deleted"})
 }

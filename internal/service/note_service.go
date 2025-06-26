@@ -14,6 +14,7 @@ type NoteService interface {
 	// soft delete a note
 	Delete(id uint) error
 	Restore(id uint) error
+	DeletePermanent(id uint) error
 }
 
 // struct that implements NoteService interface
@@ -55,4 +56,9 @@ func (s *noteService) Delete(id uint) error {
 // restore brings back a soft-deleted note by nullifying deleted_at
 func (s *noteService) Restore(id uint) error {
 	return s.repo.RestoreDeleted(id)
+}
+
+// delete permanently
+func (s *noteService) DeletePermanent(id uint) error {
+	return s.repo.DeletePermanent(id)
 }
