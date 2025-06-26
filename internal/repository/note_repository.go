@@ -47,7 +47,8 @@ func (r *noteRepository) FindByID(id uint) (*model.Note, error) {
 // returns all notes created by a specific user
 func (r *noteRepository) FindByUser(userID uint) ([]model.Note, error) {
 	var notes []model.Note
-	err := r.db.Where("user_id = ?", userID).Find(&notes).Error
+	// soft-deleted notes using Unscoped() to response with soft-deleted notes also
+	err := r.db.Unscoped().Where("user_id = ?", userID).Find(&notes).Error
 	return notes, err
 }
 
