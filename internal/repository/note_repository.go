@@ -15,6 +15,7 @@ type NoteRepository interface {
 	DeleteSoft(id uint) error
 	RestoreDeleted(id uint) error
 	DeletePermanent(id uint) error
+	SearchUserNotes(userID uint, query string) ([]model.Note, error)
 }
 
 type noteRepository struct {
@@ -65,6 +66,15 @@ func (r *noteRepository) RestoreDeleted(id uint) error {
 }
 
 // permanently delete from db
-func (r * noteRepository) DeletePermanent (id uint) error {
+func (r *noteRepository) DeletePermanent(id uint) error {
 	return r.db.Unscoped().Delete(&model.Note{}, id).Error
+}
+
+// search note
+func (r *noteRepository) SearchUserNotes(userID uint, query string) ([]model.Note, error) {
+	var notes []model.Note
+	err := r.db.Unscoped().
+		Where("user_id = ? AND (title ILIKE ? OR content ILIKE ? OR tag ILIKE ?)", userID, "%"+query+"%", "%"+query+"%", "%"+query+"%").
+		Find(&notes).Error
+	return notes, err
 }

@@ -149,3 +149,22 @@ func (h *NoteHandler) DeleteNotePermanent(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "note permanently deleted"})
 }
+
+// search note
+func (h *NoteHandler) SearchNotes(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+	query := c.Query("q")
+
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "search query cannot be empty"})
+		return
+	}
+
+	notes, err := h.service.SearchUserNotes(userID, query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "search failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, notes)
+}
