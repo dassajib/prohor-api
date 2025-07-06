@@ -5,12 +5,13 @@ import (
 	"github.com/dassajib/prohor-api/internal/repository"
 )
 
-// interface defines what functionalities the note service must provide
+// defines what functionalities the note service must provide
 type NoteService interface {
 	Create(note *model.Note) error
 	Update(note *model.Note) error
 	GetNoteByID(id uint) (*model.Note, error)
 	GetUserNotes(userID uint) ([]model.Note, error)
+	TogglePin(id uint, pinned bool) error
 	// soft delete a note
 	Delete(id uint) error
 	Restore(id uint) error
@@ -29,17 +30,17 @@ func NewNoteService(repo repository.NoteRepository) NoteService {
 	return &noteService{repo}
 }
 
-// calls the repository to insert a new note into the db
+// calls repository to create
 func (s *noteService) Create(note *model.Note) error {
 	return s.repo.Create(note)
 }
 
-// calls the repository to modify an existing note
+// calls repository to update note
 func (s *noteService) Update(note *model.Note) error {
 	return s.repo.Update(note)
 }
 
-// fetches a single note by its ID (can include soft-deleted ones)
+// call repo to find a single note(can include soft-deleted ones)
 func (s *noteService) GetNoteByID(id uint) (*model.Note, error) {
 	return s.repo.FindByID(id)
 }
@@ -54,7 +55,7 @@ func (s *noteService) Delete(id uint) error {
 	return s.repo.DeleteSoft(id)
 }
 
-// restore brings back a soft-deleted note by nullifying deleted_at
+// brings back a soft-deleted note by nullifying deleted_at
 func (s *noteService) Restore(id uint) error {
 	return s.repo.RestoreDeleted(id)
 }
@@ -67,4 +68,14 @@ func (s *noteService) DeletePermanent(id uint) error {
 // search note
 func (s *noteService) SearchUserNotes(userID uint, query string) ([]model.Note, error) {
 	return s.repo.SearchUserNotes(userID, query)
+}
+
+// toggle pinned status
+func (s *noteService) TogglePin(id uint, pinned bool) error {
+	note, err := s.repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+	note.Pinned = pinned
+	return s.repo.Update(note)
 }
