@@ -22,7 +22,7 @@ func NewNoteHandler(service service.NoteService) *NoteHandler {
 
 // saves a new note with title, content, tag, and auto-filled user and date
 func (h *NoteHandler) CreateNote(c *gin.Context) {
-	// get logged-in user's ID from token
+	// get logged-in user's ID from token (set by auth middleware)
 	userID := c.MustGet("user_id").(uint)
 	var note model.Note
 
@@ -135,6 +135,7 @@ func (h *NoteHandler) RestoreNote(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "note restored"})
 }
 
+// del permanently
 func (h *NoteHandler) DeleteNotePermanent(c *gin.Context) {
 	var id uint
 	if _, err := fmt.Sscan(c.Param("id"), &id); err != nil {
@@ -167,4 +168,43 @@ func (h *NoteHandler) SearchNotes(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, notes)
+}
+
+// to handle toggle pinned
+func (h *NoteHandler) TogglePin(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
+
+	// read note id from URL parameter and convert to uint
+	var noteID uint
+	if _, err := fmt.Sscan(c.Param("id"), &noteID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid note ID"})
+		return
+	}
+
+	// fetch the note from the service
+	note, err := h.service.GetNoteByID(noteID)
+	if err != nil || note.UserID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized access"})
+		return
+	}
+
+	// bind request body JSON to a struct to extract the "pinned" field
+	var payload struct {
+		Pinned bool `json:"pinned"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid input",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// call service to toggle the pinned status
+	if err := h.service.TogglePin(noteID, payload.Pinned); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update pin status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "pin status updated"})
 }

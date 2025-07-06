@@ -57,6 +57,7 @@ func main() {
 		noteGroup.PUT("/:id/restore", noteHandler.RestoreNote)
 		noteGroup.DELETE("/:id/permanent", noteHandler.DeleteNotePermanent)
 		noteGroup.GET("/search", noteHandler.SearchNotes)
+		noteGroup.PUT("/:id/pin", noteHandler.TogglePin)
 	}
 
 	// serve port on this address
